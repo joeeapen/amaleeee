@@ -1,0 +1,126 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+from tensorflow.keras.datasets import fashion_mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Input
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.optimizers import Adam
+📌 Step 2: Load Dataset
+(X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+📌 Step 3: Preprocessing
+# Normalize
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+
+# One-hot encoding
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+🔧 Step 4: Model Function
+def create_model(learning_rate):
+    model = Sequential([
+        Input(shape=(28,28)),
+        Flatten(),
+        Dense(128, activation='relu'),
+        Dense(64, activation='relu'),
+        Dense(10, activation='softmax')
+    ])
+
+    optimizer = Adam(learning_rate=learning_rate)
+
+    model.compile(optimizer=optimizer,
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    return model
+🧪 Step 5: Hyperparameter Experiments
+learning_rates = [0.001, 0.01]
+batch_sizes = [32, 128]
+epochs_list = [5, 10]
+
+results = []
+🔁 Run Experiments
+for lr in learning_rates:
+    for batch in batch_sizes:
+        for epochs in epochs_list:
+
+            print(f"\nLR={lr}, Batch={batch}, Epochs={epochs}")
+
+            model = create_model(lr)
+
+            start = time.time()
+
+            history = model.fit(X_train, y_train,
+                                epochs=epochs,
+                                batch_size=batch,
+                                validation_split=0.2,
+                                verbose=0)
+
+            end = time.time()
+
+            loss, acc = model.evaluate(X_test, y_test, verbose=0)
+
+            results.append({
+                'lr': lr,
+                'batch': batch,
+                'epochs': epochs,
+                'accuracy': acc,
+                'time': end - start
+            })
+
+            print(f"Accuracy: {acc:.4f}, Time: {end-start:.2f}s")
+📊 Step 6: Display Results
+for r in results:
+    print(r)
+
+
+
+      
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+data = fetch_openml("Fashion-MNIST", version=1, as_frame=False)
+
+X = data.data[:5000].astype("float32") / 255.0
+y = data.target[:5000]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+best_accuracy = 0
+best_settings = None
+
+for lr in [0.001, 0.01]:
+    for batch in [32, 64]:
+        for epochs in [10, 20]:
+
+            model = make_pipeline(
+                StandardScaler(),
+                MLPClassifier(
+                    hidden_layer_sizes=(100,),
+                    learning_rate_init=lr,
+                    batch_size=batch,
+                    max_iter=epochs,
+                    random_state=42
+                )
+            )
+
+            model.fit(X_train, y_train)
+            pred = model.predict(X_test)
+            acc = accuracy_score(y_test, pred)
+
+            print("LR:", lr, "Batch:", batch,
+                  "Epochs:", epochs, "Accuracy:", acc)
+
+            if acc > best_accuracy:
+                best_accuracy = acc
+                best_settings = (lr, batch, epochs)
+
+print("\nBest Settings:", best_settings)
+print("Best Accuracy:", best_accuracy)
